@@ -1,0 +1,19 @@
+{
+  "name": "academic-lead",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Academic Lead — academic monitoring and documentation portal for the Department of Computer Applications, Vignan's Foundation for Science, Technology & Research",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "mongodb": "6.3.0"
+  },
+  "devDependencies": {
+    "vercel": "33.0.1"
+  }
+}
