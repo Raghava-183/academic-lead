@@ -4,7 +4,7 @@ Academic monitoring and documentation portal for the **Department of Computer Ap
 
 Four modules, one shared departmental login, every record stored in MongoDB with its supporting evidence:
 
-1. **Attendance & Counselling** — Semester 1 / Semester 2, five classes, per-student records with issues, action taken and follow-up dates
+1. **Attendance & Counselling** — Semester 1 / Semester 2, five classes, per-student records with issues, action taken and follow-up dates. **Record whole class** opens a grid with one row per student from the roster, so a whole class is entered and saved in one go.
 2. **Assessment** — Formative (FA) and Summative (SA) kept separately, with justification and action plan
 3. **Co-Curricular Activities** — event register with participation totals
 4. **Course Feedback** — Phase 1 and Phase 2 per subject, with action plan

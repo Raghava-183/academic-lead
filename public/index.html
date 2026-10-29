@@ -206,6 +206,23 @@ td.acts{white-space:nowrap}
 .modal-box{background:var(--page);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:780px;
   margin-block:auto;border:1px solid var(--line);overflow:hidden}
 .modal-box.sm{max-width:430px}
+.modal-box.lg{max-width:1120px}
+.gridbar{display:flex;flex-wrap:wrap;gap:11px;align-items:flex-end;margin-bottom:13px}
+.gridbar .field{min-width:148px}
+.gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.gridtable{border-collapse:collapse;width:100%;min-width:940px;font-size:13px}
+.gridtable th,.gridtable td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
+.gridtable th{background:var(--sunk);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:1}
+.gridtable tr:last-child td{border-bottom:0}
+.gridtable input,.gridtable textarea{width:100%;border:1px solid var(--line-2);border-radius:6px;
+  padding:6px 7px;background:var(--card);font-size:13px}
+.gridtable textarea{min-height:38px;resize:vertical;line-height:1.4}
+.gridtable input:focus,.gridtable textarea:focus{border-color:var(--royal);outline:none;box-shadow:0 0 0 2px var(--royal-soft)}
+.gridtable td.rollcell{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;min-width:118px}
+.gridtable td.namecell{min-width:150px}
+.gridtable tr.filled td.rollcell{box-shadow:inset 3px 0 0 var(--gold)}
+.gridcount{font-size:13px;color:var(--muted);margin-right:auto;align-self:center}
 .modal-head{background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .modal-head h2{font-size:17px;color:#fff}
 .modal-head .mh-sub{font-size:12px;color:#BFD2F2;margin-top:2px}

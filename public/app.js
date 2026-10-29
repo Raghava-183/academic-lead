@@ -104,7 +104,7 @@
     var wrap = el('div', 'modal');
     wrap.setAttribute('role', 'dialog');
     wrap.setAttribute('aria-modal', 'true');
-    var box = el('div', 'modal-box' + (opts.small ? ' sm' : ''));
+    var box = el('div', 'modal-box' + (opts.small ? ' sm' : '') + (opts.large ? ' lg' : ''));
     var head = el('div', 'modal-head');
     head.innerHTML = '<div><h2>' + esc(opts.title) + '</h2>' +
       (opts.sub ? '<div class="mh-sub">' + esc(opts.sub) + '</div>' : '') + '</div>';
@@ -621,6 +621,162 @@
       ]
     });
     form.addEventListener('submit', function (e) { e.preventDefault(); });
+    return m;
+  }
+
+  /* ------------------------------------------------- whole-class entry grid */
+  function openClassGrid(sem, cls) {
+    var roster = Store.all('roster').filter(function (r) { return r.cls === cls; })
+      .sort(function (a, b) { return String(a.rollNo).localeCompare(String(b.rollNo)); });
+
+    if (!roster.length) {
+      openModal({
+        title: 'No student list for ' + cls, small: true,
+        body: '<p style="margin:0;color:var(--muted)">Import the class list first. Every student then appears here as a row you can fill in, and the roll numbers come across automatically.</p>',
+        buttons: [
+          { label: 'Cancel', cls: 'btn-ghost' },
+          {
+            label: 'Import students', cls: 'btn-primary', onClick: function (close) {
+              close(); App.go('roster'); openRosterImport();
+            }
+          }
+        ]
+      });
+      return;
+    }
+
+    var body = el('div');
+    var bar = el('div', 'gridbar');
+    bar.innerHTML =
+      '<div class="field"><label for="g_date">Date <span class="req">*</span></label>' +
+      '<input id="g_date" type="date" value="' + todayISO() + '"></div>' +
+      '<div class="field"><label for="g_type">Type <span class="req">*</span></label>' +
+      '<select id="g_type"><option>Attendance</option><option>Counselling</option></select></div>' +
+      '<div class="field"><label for="g_year">Academic year</label><select id="g_year">' +
+      YEARS.map(function (y) {
+        return '<option' + (y === YEAR_DEFAULT ? ' selected' : '') + '>' + esc(y) + '</option>';
+      }).join('') + '</select></div>' +
+      '<div class="field" style="flex:1;min-width:230px"><label for="g_fill">Fill every empty Details box with</label>' +
+      '<div style="display:flex;gap:6px"><input id="g_fill" type="text" placeholder="e.g. Present, no concerns">' +
+      '<button class="btn btn-sm btn-ghost" type="button" id="g_apply">Apply</button></div></div>';
+    body.appendChild(bar);
+
+    var wrap = el('div', 'gridwrap');
+    var table = el('table', 'gridtable');
+    table.innerHTML = '<thead><tr><th>Roll number</th><th>Student name</th>' +
+      '<th>Details / discussion</th><th>Issues identified</th><th>Action taken</th><th>Follow-up</th></tr></thead>';
+    var tbody = el('tbody');
+    var rows = [];
+
+    roster.forEach(function (stu, i) {
+      var tr = el('tr');
+      var tdRoll = el('td', 'rollcell', esc(stu.rollNo));
+      var tdName = el('td', 'namecell', esc(stu.name));
+      var mk = function (tag, id, ph) {
+        var td = el('td');
+        var inp = el(tag);
+        inp.id = id;
+        if (tag === 'input') inp.type = 'text';
+        if (ph) inp.placeholder = ph;
+        td.appendChild(inp);
+        return { td: td, inp: inp };
+      };
+      var details = mk('textarea', 'g_d_' + i, 'Leave blank to skip this student');
+      var issues = mk('textarea', 'g_i_' + i, '');
+      var action = mk('textarea', 'g_a_' + i, '');
+      var fu = el('td');
+      var fuInp = el('input'); fuInp.type = 'date'; fuInp.id = 'g_f_' + i;
+      fu.appendChild(fuInp);
+
+      tr.appendChild(tdRoll); tr.appendChild(tdName);
+      tr.appendChild(details.td); tr.appendChild(issues.td); tr.appendChild(action.td); tr.appendChild(fu);
+      tbody.appendChild(tr);
+
+      var row = {
+        stu: stu, tr: tr,
+        details: details.inp, issues: issues.inp, action: action.inp, followUp: fuInp
+      };
+      rows.push(row);
+      details.inp.addEventListener('input', function () { mark(row); count(); });
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    body.appendChild(wrap);
+
+    var counter = el('div', 'gridcount');
+
+    function mark(row) {
+      if (row.details.value.trim()) row.tr.classList.add('filled');
+      else row.tr.classList.remove('filled');
+    }
+    function filledRows() {
+      return rows.filter(function (r) { return r.details.value.trim(); });
+    }
+    function count() {
+      var n = filledRows().length;
+      counter.textContent = n
+        ? n + ' of ' + rows.length + ' students will be saved'
+        : 'Fill in the Details column for each student you want to record. ' + rows.length + ' students on roll.';
+    }
+    count();
+
+    bar.querySelector('#g_apply').addEventListener('click', function () {
+      var text = bar.querySelector('#g_fill').value.trim();
+      if (!text) { toast('Type the text you want to copy into every row first.', 'warn'); return; }
+      rows.forEach(function (r) {
+        if (!r.details.value.trim()) { r.details.value = text; mark(r); }
+      });
+      count();
+      toast('Filled every empty row.', 'ok');
+    });
+
+    var m = openModal({
+      title: 'Record the whole class',
+      sub: cls + ' · ' + sem + ' · ' + roster.length + ' students on roll',
+      large: true,
+      body: body,
+      buttons: [
+        { label: 'Cancel', cls: 'btn-ghost' },
+        {
+          label: 'Save records', cls: 'btn-primary', onClick: function (close, btn) {
+            var date = bar.querySelector('#g_date').value;
+            var type = bar.querySelector('#g_type').value;
+            var acadYear = bar.querySelector('#g_year').value;
+            if (!date) { toast('Pick a date first.', 'bad'); bar.querySelector('#g_date').focus(); return; }
+            var picked = filledRows();
+            if (!picked.length) { toast('No rows filled in yet — add Details for at least one student.', 'bad'); return; }
+
+            var recs = picked.map(function (r) {
+              return {
+                date: date, type: type, acadYear: acadYear, cls: cls, sem: sem,
+                studentName: r.stu.name, rollNo: r.stu.rollNo,
+                details: r.details.value.trim(),
+                issues: r.issues.value.trim(),
+                action: r.action.value.trim(),
+                followUp: r.followUp.value || '',
+                remarks: '', proof: [], enteredBy: App.user || ''
+              };
+            });
+
+            btn.disabled = true;
+            var busy = toast('Saving ' + recs.length + ' records…', 'busy');
+            Store.putMany('attendance', recs).then(function (res) {
+              busy();
+              var n = (res.records || []).length;
+              close();
+              toast(n + ' record' + (n === 1 ? '' : 's') + ' saved for ' + cls + '.', 'ok', 5000);
+              App.render();
+            }).catch(function (e) {
+              busy();
+              btn.disabled = false;
+              if (e && e.code === 'unauthorized') { toast('Your session expired. Reloading…', 'bad'); setTimeout(function () { location.reload(); }, 1500); return; }
+              toast((e && e.message) || 'Could not save these records. Please try again.', 'bad', 8000);
+            });
+          }
+        }
+      ]
+    });
+    m.foot.insertBefore(counter, m.foot.firstChild);
     return m;
   }
 
@@ -1142,7 +1298,17 @@
         base: { cls: nav.cls, sem: nav.sem }
       });
     });
-    head.appendChild(addBtn);
+    if (isAtt) {
+      var btns = el('div', 'btnrow');
+      var gridBtn = el('button', 'btn btn-gold', 'Record whole class');
+      gridBtn.type = 'button';
+      gridBtn.addEventListener('click', function () { openClassGrid(nav.sem, nav.cls); });
+      btns.appendChild(gridBtn);
+      btns.appendChild(addBtn);
+      head.appendChild(btns);
+    } else {
+      head.appendChild(addBtn);
+    }
     panel.appendChild(head);
 
     var filters = isAtt ? [{ k: 'type', label: 'Type', options: ['Attendance', 'Counselling'] },
